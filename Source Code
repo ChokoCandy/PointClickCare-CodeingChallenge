@@ -1,1 +1,173 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Random;
 
+public class Blackjack 
+{
+    static class Card 
+    {
+        String rank;
+        int value;
+        Card(String rank, int value) 
+        {
+            this.rank = rank;
+            this.value = value;
+        }
+        public String toString() 
+        {
+            return rank;
+        }//end toString()
+    }//end Card
+    static class Deck 
+    {
+        ArrayList<Card> cards = new ArrayList<>();
+        Random rand = new Random();
+        Deck() 
+        {
+            String[] ranks = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+            for (String rank : ranks) 
+            {
+                int value = rank.equals("A") ? 11 :
+                            (rank.equals("K") || rank.equals("Q") || rank.equals("J")) ? 10 :
+                            Integer.parseInt(rank);
+                for (int i = 0; i < 4; i++) 
+                {
+                    cards.add(new Card(rank, value)); // 4 of each card
+                }
+            }
+            shuffle();
+        }//end Deck()
+        void shuffle() 
+        {
+            for (int i = 0; i < cards.size(); i++) 
+            {
+                int j = rand.nextInt(cards.size());
+                Card temp = cards.get(i);
+                cards.set(i, cards.get(j));
+                cards.set(j, temp);
+            }
+        }
+        Card dealCard() 
+        {
+            return cards.remove(cards.size() - 1);
+        }//end dealCard()
+    }//end Deck
+    static int calculateTotal(ArrayList<Card> hand) 
+    {
+        int total = 0;
+        int aceCount = 0;
+        for (Card c : hand) 
+        {
+            total += c.value;
+            if (c.rank.equals("A")) aceCount++;
+        }
+        while (total > 21 && aceCount > 0) 
+        {
+            total -= 10;
+            aceCount--;
+        }
+        return total;
+    }//end calculateTotal()
+    static void printHand(String name, ArrayList<Card> hand, boolean hideFirst) 
+    {
+        System.out.print(name + "'s hand: ");
+        for (int i = 0; i < hand.size(); i++) 
+        {
+            if (i == 0 && hideFirst) 
+            {
+                System.out.print("[Hidden] ");
+            } 
+            else 
+            {
+                System.out.print(hand.get(i) + " ");
+            }
+        }
+        if (!hideFirst) 
+        {
+            System.out.println("=> Total: " + calculateTotal(hand));
+        } 
+        else 
+        {
+            System.out.println();
+        }
+    }//end printHand()
+    public static void main(String[] args) 
+    {
+        Scanner scanner = new Scanner(System.in);
+        Deck deck = new Deck();
+        ArrayList<Card> playerHand = new ArrayList<>();
+        ArrayList<Card> dealerHand = new ArrayList<>();
+        // Initial deal
+        playerHand.add(deck.dealCard());
+        playerHand.add(deck.dealCard());
+        dealerHand.add(deck.dealCard()); // face-down
+        dealerHand.add(deck.dealCard()); // face-up
+        System.out.println("=== Blackjack ===");
+        printHand("Dealer", dealerHand, true);
+        printHand("Player", playerHand, false);
+        // Player turn
+        while (true) 
+        {
+            int playerTotal = calculateTotal(playerHand);
+            if (playerTotal == 21) 
+            {
+                System.out.println("You got 21!");
+                break;
+            } 
+            else if (playerTotal > 21) 
+            {
+                System.out.println("You BUSTED!");
+                break;
+            }
+            System.out.print("HIT or STAY? ");
+            String choice = scanner.nextLine().trim().toUpperCase();
+            if (choice.equals("HIT")) 
+            {
+                playerHand.add(deck.dealCard());
+                printHand("Player", playerHand, false);
+            } 
+            else if (choice.equals("STAY"))
+            {
+                break;
+            }
+            else 
+            {
+                System.out.println("Invalid input. Please enter HIT or STAY.");
+            }
+        }
+        // Dealer turn
+        int playerTotal = calculateTotal(playerHand);
+        if (playerTotal <= 21) 
+        {
+            System.out.println("\nDealer's Turn:");
+            printHand("Dealer", dealerHand, false);
+            while (calculateTotal(dealerHand) < 16) 
+            {
+                dealerHand.add(deck.dealCard());
+                printHand("Dealer", dealerHand, false);
+            }
+            int dealerTotal = calculateTotal(dealerHand);
+            // Outcome
+            System.out.println("\n== Result ==");
+            System.out.println("Player: " + playerTotal);
+            System.out.println("Dealer: " + dealerTotal);
+            if (dealerTotal > 21 || playerTotal > dealerTotal) 
+            {
+                System.out.println("You WIN!");
+            } 
+            else if (playerTotal < dealerTotal) 
+            {
+                System.out.println("You LOSE.");
+            } 
+            else 
+            {
+                System.out.println("It's a TIE.");
+            }
+        } 
+        else 
+        {
+            System.out.println("Dealer wins by default.");
+        }
+        scanner.close();
+    }//end main()
+}//end class
